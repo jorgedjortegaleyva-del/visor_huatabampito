@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leaflet con Capas Locales</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+  <style>
+    body { margin: 0; padding: 0; }
+    html, body, #map { width: 100%; height: 100%; }
+    h1 {
+      position: absolute; 
+      top: 10px; 
+      left: 50px; 
+      z-index: 1000;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 5px 15px; 
+      border-radius: 5px;
+      font-family: sans-serif;
+      font-size: 1.5em;
+    }
+  </style>
+</head>
+<body>
+  <h1>MALECÓN TURÍSTICO HUATABAMPITO</h1>
+  <div id="map"></div>
+
+  <script>
+    // 1. Crear el mapa y centrarlo
+    var map = L.map('map').setView([26.697138, -109.602009], 15);
+
+    // 2. Definir las capas base y superpuestas
+    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    });
+
+    // Usa la ruta relativa a la carpeta de teselas
+    var teselasLocales = L.tileLayer('teselas/{z}/{x}/{y}.png', {
+      minZoom: 12,
+      maxZoom: 18,
+      tms: false,
+      attribution: 'Teselas locales'
+    });
+
+    // Capa GeoJSON vacía para llenarla después
+    var maleconLayer = L.geoJSON(null, {
+      style: function(feature) {
+        return { 
+          color: "#ff0000", // Rojo
+          weight: 5, 
+          opacity: 0.8 
+        };
+      }
+    });
+
+    // 3. Cargar el GeoJSON desde el archivo local
+    fetch('malecon.geojson')
+      .then(response => response.json())
+      .then(data => {
+        maleconLayer.addData(data);
+      })
+      .catch(error => console.error('Error al cargar el archivo GeoJSON:', error));
+
+    // 4. Añadir capas iniciales al mapa
+    osm.addTo(map);
+    teselasLocales.addTo(map);
+    maleconLayer.addTo(map);
+
+    // 5. Crear el control de capas
+    var baseMaps = {
+      "OpenStreetMap": osm
+    };
+
+    var overlayMaps = {
+      "Mis Teselas": teselasLocales,
+      "Malecón": maleconLayer
+    };
+
+    L.control.layers(baseMaps, overlayMaps).addTo(map);
+  </script>
+</body>
+</html>
